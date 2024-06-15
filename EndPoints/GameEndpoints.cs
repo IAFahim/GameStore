@@ -19,11 +19,11 @@ public static class GameEndpoints
         {
             mapGroup.MapGet("/", GetAllGames);
             mapGroup.MapGet("/{id}", GetGame).WithName(GetGameRouteName);
-            mapGroup.MapPost("/", AddGame).WithParameterValidation();
-            mapGroup.MapPut("/{id}", UpdateGame).WithParameterValidation();
+            mapGroup.MapPost("/", AddGame);
+            mapGroup.MapPut("/{id}", UpdateGame);
             mapGroup.MapDelete("/{id}", RemoveGame);
         }
-        return mapGroup;
+        return mapGroup.WithParameterValidation();
     }
 
     private static IResult RemoveGame(int id)
