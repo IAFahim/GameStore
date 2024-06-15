@@ -13,14 +13,17 @@ public static class GameEndpoints
         new GameDto(3, "Minecraft", "Sandbox", 26.95m, new DateOnly(2011, 11, 18))
     ];
 
-    public static WebApplication MapGameEndPoints(this WebApplication app)
+    public static RouteGroupBuilder MapGameEndPoints(this WebApplication app)
     {
-        app.MapGet("games", GetAllGames);
-        app.MapGet("games/{id}", GetGame).WithName(GetGameRouteName);
-        app.MapPost("games", PostGames);
-        app.MapPut("games/{id}", UpdateGame);
-        app.MapDelete("games/{id}", RemoveGame);
-        return app;
+        var mapGroup = app.MapGroup("games");
+        {
+            mapGroup.MapGet("/", GetAllGames);
+            mapGroup.MapGet("/{id}", GetGame).WithName(GetGameRouteName);
+            mapGroup.MapPost("/", PostGames);
+            mapGroup.MapPut("/{id}", UpdateGame);
+            mapGroup.MapDelete("/{id}", RemoveGame);
+        }
+        return mapGroup;
     }
 
     private static IResult RemoveGame(int id)
