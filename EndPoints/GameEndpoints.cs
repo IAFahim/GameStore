@@ -19,8 +19,8 @@ public static class GameEndpoints
         {
             mapGroup.MapGet("/", GetAllGames);
             mapGroup.MapGet("/{id}", GetGame).WithName(GetGameRouteName);
-            mapGroup.MapPost("/", PostGames);
-            mapGroup.MapPut("/{id}", UpdateGame);
+            mapGroup.MapPost("/", AddGame).WithParameterValidation();
+            mapGroup.MapPut("/{id}", UpdateGame).WithParameterValidation();
             mapGroup.MapDelete("/{id}", RemoveGame);
         }
         return mapGroup;
@@ -48,7 +48,7 @@ public static class GameEndpoints
         return Results.NoContent();
     }
 
-    private static IResult PostGames(CreateGameDto newGame)
+    private static IResult AddGame(CreateGameDto newGame)
     {
         GameDto gameDto = new GameDto(
             Id: Games.Count + 1,
