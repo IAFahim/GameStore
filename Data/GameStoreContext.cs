@@ -7,7 +7,7 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
 {
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Genre> Genres => Set<Genre>();
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         Genre[] genres =
@@ -19,7 +19,7 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
             new Genre { Id = 5, Name = "Kids and Family" }
         ];
         modelBuilder.Entity<Genre>().HasData(genres);
-
+        
         Game[] games =
         [
             new Game
