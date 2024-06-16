@@ -15,10 +15,22 @@ public static class GameMapping
             ReleaseDate = game.ReleaseDate
         };
     }
-
-    public static GameDto ToDto(this Game game)
+    
+    public static Game ToEntity(this UpdateGameDto game, int id)
     {
-        return new GameDto(
+        return new Game()
+        {
+            Id = id,
+            Name = game.Name,
+            GenreId = game.GenreId,
+            Price = game.Price,
+            ReleaseDate = game.ReleaseDate
+        };
+    }
+
+    public static GameSummaryDto ToGameSummaryDto(this Game game)
+    {
+        return new GameSummaryDto(
             Id: game.Id,
             Name: game.Name,
             Genre: game.Genre!.Name,
@@ -26,4 +38,16 @@ public static class GameMapping
             ReleaseDate: game.ReleaseDate
         );
     }
+
+    public static GameDetailsDto ToGameDetailsDto(this Game game)
+    {
+        return new GameDetailsDto(
+            Id: game.Id,
+            Name: game.Name,
+            GenreId: game.GenreId,
+            Price: game.Price,
+            ReleaseDate: game.ReleaseDate
+        );
+    }
+    
 }

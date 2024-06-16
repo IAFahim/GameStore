@@ -12,11 +12,14 @@ Content-Type: application/json
   "releaseDate": "2011-11-18"
 }
 ###
-PUT http://localhost:5215/games/3
+PUT http://localhost:5215/games/6
 Content-Type: application/json
 
 {
-  "price": 100
+  "name": "Zen Farm",
+  "genreId": 5,
+  "price": 90,
+  "releaseDate": "2024-06-16"
 }
 ###
-DELETE http://localhost:5215/games/3
+DELETE http://localhost:5215/games/7

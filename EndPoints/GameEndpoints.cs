@@ -10,13 +10,6 @@ public static class GameEndpoints
 {
     const string GetGameRouteName = "GetGame";
 
-    private static readonly List<GameDto> Games =
-    [
-        new GameDto(1, "Super Mario", "Platformer", 59.99m, new DateOnly(1985, 9, 13)),
-        new GameDto(2, "The Legend of Zelda", "Action-adventure", 59.99m, new DateOnly(1986, 2, 21)),
-        new GameDto(3, "Minecraft", "Sandbox", 26.95m, new DateOnly(2011, 11, 18))
-    ];
-
     public static RouteGroupBuilder MapGameEndPoints(this WebApplication app)
     {
         var mapGroup = app.MapGroup("games");
@@ -30,24 +23,24 @@ public static class GameEndpoints
         return mapGroup.WithParameterValidation();
     }
 
-    private static IResult RemoveGame(int id)
+    private static IResult RemoveGame(int id, GameStoreContext gameStoreContext)
     {
-        var deleted = Games.RemoveAll(g => g.Id == id);
-        if (deleted == 0) return Results.NotFound();
+        var deleteCount = gameStoreContext.Games
+            .Where(g => g.Id == id)
+            .ExecuteDelete();
+
+        if (deleteCount == 0) return Results.NotFound();
         return Results.NoContent();
     }
 
-    private static IResult UpdateGame(int id, UpdateGameDto updateGameDto)
+    private static IResult UpdateGame(int id, UpdateGameDto updateGameDto, GameStoreContext gameStoreContext)
     {
-        var index = Games.FindIndex(g => g.Id == id);
-        if (index == -1) return Results.NotFound();
+        Game? existingGame = gameStoreContext.Games.Find(id);
+        if (existingGame == null) return Results.NotFound();
 
-        Games[index] = new GameDto(
-            Id: id, Name: updateGameDto.Name,
-            Genre: updateGameDto.Genre,
-            Price: updateGameDto.Price,
-            ReleaseDate: updateGameDto.ReleaseDate
-        );
+        Game updateGame = updateGameDto.ToEntity(existingGame.Id);
+        gameStoreContext.Entry(existingGame).CurrentValues.SetValues(updateGame);
+        gameStoreContext.SaveChanges();
 
         return Results.NoContent();
     }
@@ -55,7 +48,6 @@ public static class GameEndpoints
     private static IResult AddGame(CreateGameDto newGame, GameStoreContext gameStoreContext)
     {
         Game game = newGame.ToEntity();
-        game.Genre = gameStoreContext.Genres.Find(newGame.GenreId);
 
         gameStoreContext.Games.Add(game);
         gameStoreContext.SaveChanges();
@@ -63,15 +55,22 @@ public static class GameEndpoints
         return Results.CreatedAtRoute(
             GetGameRouteName,
             new { id = game.Id },
-            game.ToDto()
+            game.ToGameDetailsDto()
         );
     }
 
-    private static IResult GetGame(int id)
+    private static IResult GetGame(int id, GameStoreContext gameStoreContext)
     {
-        var game = Games.Find(g => g.Id == id);
-        return game == null ? Results.NoContent() : Results.Ok(game);
+        Game? game = gameStoreContext.Games.Find(id);
+        return game == null ? Results.NoContent() : Results.Ok(game.ToGameDetailsDto());
     }
 
-    private static DbSet<Game> GetAllGames(GameStoreContext gameStoreContext) => gameStoreContext.Games;
+    private static IResult GetAllGames(GameStoreContext gameStoreContext)
+    {
+        IQueryable<GameSummaryDto> gameSummaryDtos = gameStoreContext.Games
+            .Include(g => g.Genre)
+            .Select(g => g.ToGameSummaryDto())
+            .AsNoTracking();
+        return Results.Ok(gameSummaryDtos);
+    }
 }
