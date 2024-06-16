@@ -7,7 +7,7 @@ Content-Type: application/json
 
 {
   "name": "Minecraft",
-  "genre": "Sandbox",
+  "genreId": 5,
   "price": 26.95,
   "releaseDate": "2011-11-18"
 }

@@ -1,4 +1,8 @@
-﻿using GameStore.API.Dtos;
+﻿using GameStore.API.Data;
+using GameStore.API.Dtos;
+using GameStore.API.Entities;
+using GameStore.API.Mapping;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.API.EndPoints;
 
@@ -48,17 +52,19 @@ public static class GameEndpoints
         return Results.NoContent();
     }
 
-    private static IResult AddGame(CreateGameDto newGame)
+    private static IResult AddGame(CreateGameDto newGame, GameStoreContext gameStoreContext)
     {
-        GameDto gameDto = new GameDto(
-            Id: Games.Count + 1,
-            Name: newGame.Name,
-            Genre: newGame.Genre,
-            Price: newGame.Price,
-            ReleaseDate: newGame.ReleaseDate
+        Game game = newGame.ToEntity();
+        game.Genre = gameStoreContext.Genres.Find(newGame.GenreId);
+
+        gameStoreContext.Games.Add(game);
+        gameStoreContext.SaveChanges();
+
+        return Results.CreatedAtRoute(
+            GetGameRouteName,
+            new { id = game.Id },
+            game.ToDto()
         );
-        Games.Add(gameDto);
-        return Results.CreatedAtRoute(GetGameRouteName, new { id = gameDto.Id }, gameDto);
     }
 
     private static IResult GetGame(int id)
@@ -67,5 +73,5 @@ public static class GameEndpoints
         return game == null ? Results.NoContent() : Results.Ok(game);
     }
 
-    private static List<GameDto> GetAllGames() => Games;
+    private static DbSet<Game> GetAllGames(GameStoreContext gameStoreContext) => gameStoreContext.Games;
 }
