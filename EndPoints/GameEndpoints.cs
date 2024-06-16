@@ -14,43 +14,36 @@ public static class GameEndpoints
     {
         var mapGroup = app.MapGroup("games");
         {
-            mapGroup.MapGet("/", GetAllGames);
-            mapGroup.MapGet("/{id}", GetGame).WithName(GetGameRouteName);
-            mapGroup.MapPost("/", AddGame);
-            mapGroup.MapPut("/{id}", UpdateGame);
-            mapGroup.MapDelete("/{id}", RemoveGame);
+            mapGroup.MapGet("/", GetAllGamesAsync);
+            mapGroup.MapGet("/{id}", GetGameAsync).WithName(GetGameRouteName);
+            mapGroup.MapPost("/", AddGameAsync);
+            mapGroup.MapPut("/{id}", UpdateGameAsync);
+            mapGroup.MapDelete("/{id}", RemoveGameAsync);
         }
         return mapGroup.WithParameterValidation();
     }
 
-    private static IResult RemoveGame(int id, GameStoreContext gameStoreContext)
+    private static async Task<List<GameSummaryDto>> GetAllGamesAsync(GameStoreContext gameStoreContext)
     {
-        var deleteCount = gameStoreContext.Games
-            .Where(g => g.Id == id)
-            .ExecuteDelete();
-
-        if (deleteCount == 0) return Results.NotFound();
-        return Results.NoContent();
+        return await gameStoreContext.Games
+            .Include(g => g.Genre)
+            .Select(g => g.ToGameSummaryDto())
+            .AsNoTracking()
+            .ToListAsync();
     }
 
-    private static IResult UpdateGame(int id, UpdateGameDto updateGameDto, GameStoreContext gameStoreContext)
+    private static async Task<IResult> GetGameAsync(int id, GameStoreContext gameStoreContext)
     {
-        Game? existingGame = gameStoreContext.Games.Find(id);
-        if (existingGame == null) return Results.NotFound();
-
-        Game updateGame = updateGameDto.ToEntity(existingGame.Id);
-        gameStoreContext.Entry(existingGame).CurrentValues.SetValues(updateGame);
-        gameStoreContext.SaveChanges();
-
-        return Results.NoContent();
+        Game? game = await gameStoreContext.Games.FindAsync(id);
+        return game == null ? Results.NoContent() : Results.Ok(game.ToGameDetailsDto());
     }
 
-    private static IResult AddGame(CreateGameDto newGame, GameStoreContext gameStoreContext)
+    private static async Task<IResult> AddGameAsync(CreateGameDto newGame, GameStoreContext gameStoreContext)
     {
         Game game = newGame.ToEntity();
 
-        gameStoreContext.Games.Add(game);
-        gameStoreContext.SaveChanges();
+        await gameStoreContext.Games.AddAsync(game);
+        await gameStoreContext.SaveChangesAsync();
 
         return Results.CreatedAtRoute(
             GetGameRouteName,
@@ -59,18 +52,25 @@ public static class GameEndpoints
         );
     }
 
-    private static IResult GetGame(int id, GameStoreContext gameStoreContext)
+    private static async Task<IResult> UpdateGameAsync(int id, UpdateGameDto updateGameDto, GameStoreContext gameStoreContext)
     {
-        Game? game = gameStoreContext.Games.Find(id);
-        return game == null ? Results.NoContent() : Results.Ok(game.ToGameDetailsDto());
+        Game? existingGame = await gameStoreContext.Games.FindAsync(id);
+        if (existingGame == null) return Results.NotFound();
+
+        Game updateGame = updateGameDto.ToEntity(existingGame.Id);
+        gameStoreContext.Entry(existingGame).CurrentValues.SetValues(updateGame);
+        await gameStoreContext.SaveChangesAsync();
+
+        return Results.NoContent();
     }
 
-    private static IResult GetAllGames(GameStoreContext gameStoreContext)
+    private static async Task<IResult> RemoveGameAsync(int id, GameStoreContext gameStoreContext)
     {
-        IQueryable<GameSummaryDto> gameSummaryDtos = gameStoreContext.Games
-            .Include(g => g.Genre)
-            .Select(g => g.ToGameSummaryDto())
-            .AsNoTracking();
-        return Results.Ok(gameSummaryDtos);
+        var deleteCount = await gameStoreContext.Games
+            .Where(g => g.Id == id)
+            .ExecuteDeleteAsync();
+
+        if (deleteCount == 0) return Results.NotFound();
+        return Results.NoContent();
     }
 }

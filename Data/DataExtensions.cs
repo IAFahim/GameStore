@@ -4,10 +4,10 @@ namespace GameStore.API.Data;
 
 public static class DataExtensions
 {
-    public static void MigrateDb(this WebApplication app)
+    public static async Task MigrateDbAsync(this WebApplication app)
     {
-        using IServiceScope scope = app.Services.CreateScope();
+        using IServiceScope scope = app.Services.CreateAsyncScope();
         GameStoreContext gameStoreContext = scope.ServiceProvider.GetRequiredService<GameStoreContext>();
-        gameStoreContext.Database.Migrate();
+        await gameStoreContext.Database.MigrateAsync();
     }
 }

@@ -22,4 +22,4 @@ Content-Type: application/json
   "releaseDate": "2024-06-16"
 }
 ###
-DELETE http://localhost:5215/games/7
+DELETE http://localhost:5215/games/6
